@@ -53,7 +53,7 @@ def _dump(log, prefix = '', filters = []):
             if assign[4:len(prefix)+4] != prefix:
                 continue
             print('del ' + assign[4+len(prefix):])
-        print('time ' + format_time(t))
+        print(format_time(t))
         print(''.join(format_list([x for x in stack if 'UtahDataCenter' not in x[0]])))
 
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
