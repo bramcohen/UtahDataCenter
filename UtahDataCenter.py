@@ -60,7 +60,7 @@ months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 
 
 def format_time(t):
     d = datetime.fromtimestamp(t)
-    return '%i %s %2i %2i:%2i:%2i.%6i' % (d.year, months[d.month-1], d.day, d.hour, d.minute, d.second, d.microsecond)
+    return '%i %s %i %2i:%02i:%02i.%06i' % (d.year, months[d.month-1], d.day, d.hour, d.minute, d.second, d.microsecond)
 
 class ObjLogger:
     def __init__(self, timefunc, other, log, prefix):
