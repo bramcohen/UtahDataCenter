@@ -18,7 +18,7 @@ time 2013 Mar 20 20:56:58.635847
 time 2013 Mar 20 20:57: 4.570768
   File "<stdin>", line 1, in <module>
 
-[3][0][4] = abc
+[3][0][4] = 'abc'
 time 2013 Mar 20 20:57:34.640986
   File "<stdin>", line 1, in <module>
 </pre>
