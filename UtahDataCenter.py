@@ -86,7 +86,7 @@ class ObjLogger:
             key = key._target
         if hasattr(value, '_target'):
             value = value._target
-        self._log.append(((self._prefix + '.' + str(key) + ' = ' + str(value)), self._time(), extract_stack()))
+        self._log.append(((self._prefix + '.' + str(key) + ' = ' + repr(value)), self._time(), extract_stack()))
         self._target.__setattr__(key, value)
 
     def __iter__(self):
@@ -111,42 +111,6 @@ class ObjLogger:
         if hasattr(thing, '_target'):
             thing = thing._target
         return self._target == thing
-
-    def dump(self, sub = '', filters = []):
-        _dump(self._log, self._prefix + sub, filters)
-
-    def dclear(self):
-        del self._log[:]
-
-class LogBase:
-    def __init__(self, timefunc = defaulttime):
-        object.__setattr__(self, '_time', timefunc)
-        object.__setattr__(self, '_target', self)
-        object.__setattr__(self, '_log', [])
-        object.__setattr__(self, '_prefix', '')
-
-    def __delattr__(self, key):
-        if hasattr(key, '_target'):
-            key = key._target
-        self._log.append(('del ' + self._prefix + '.' + str(key), self._time(), extract_stack()))
-        del self.__dict__[key]
-
-    def __setattr__(self, key, value):
-        if hasattr(key, '_target'):
-            key = key._target
-        if hasattr(value, '_target'):
-            value = value._target
-        self._log.append(((self._prefix + '.' + str(key) + ' = ' + str(value)), self._time(), extract_stack()))
-        self.__dict__[key] = value
-
-    def __iter__(self):
-        return (utah(b, self._time, self._log, self._prefix + '<iter ' + str(a) + '>') for (a, b) in enumerate(self._target))
-
-    def __getattribute__(self, key):
-        if hasattr(key, '_target'):
-            key = key._target
-        return utah(object.__getattribute__(self, key), object.__getattribute__(self, '_time'), 
-                object.__getattribute__(self, '_log'), object.__getattribute__(self, '_prefix') + '.' + str(key), self)
 
     def dump(self, sub = '', filters = []):
         _dump(self._log, self._prefix + sub, filters)
@@ -186,7 +150,7 @@ class ListLogger(Sequence):
     def append(self, thing):
         if hasattr(thing, '_target'):
             thing = thing._target
-        self._add(self._prefix  + '.append(' + str(thing) + ')')
+        self._add(self._prefix  + '.append(' + repr(thing) + ')')
         self._target.append(thing)
     
     def count(self, thing):
@@ -196,7 +160,7 @@ class ListLogger(Sequence):
     
     def extend(self, stuff):
         stuff2 = [(x if not hasattr(x, '_target') else x._target) for x in stuff]
-        self._add(self._prefix + '.extend(' + str(stuff) + ')')
+        self._add(self._prefix + '.extend(' + repr(stuff) + ')')
         self._target.extend(stuff2)
     
     def index(self, thing):
@@ -209,7 +173,7 @@ class ListLogger(Sequence):
             index = index._target
         if hasattr(thing, '_target'):
             thing = thing._target
-        self._add(self._prefix + '.insert(' + str(index) + ', ' + str(thing) + ')')
+        self._add(self._prefix + '.insert(' + str(index) + ', ' + repr(thing) + ')')
         self._target.insert(index, thing)
     
     def pop(self, index):
@@ -256,7 +220,7 @@ class ListLogger(Sequence):
             index = index._target
         if hasattr(thing, '_target'):
             thing = thing._target
-        self._add(self._prefix + '[' + str(index) + '] = ' + str(thing))
+        self._add(self._prefix + '[' + str(index) + '] = ' + repr(thing))
         self._target[index] = thing
 
     def __delitem__(self, key):
@@ -289,12 +253,12 @@ class DictLogger:
         if hasattr(a, '_target'):
             a = a._target
         if b is None:
-            return utah(self._target.get(a, b), self._time, self._log, self._prefix + '.get(' + str(a) + ')')
+            return utah(self._target.get(a, b), self._time, self._log, self._prefix + '.get(' + repr(a) + ')')
         else:
-            return utah(self._target.get(a, b), self._time, self._log, self._prefix + '.get(' + str(a) + ',' + str(b) + ')')
+            return utah(self._target.get(a, b), self._time, self._log, self._prefix + '.get(' + repr(a) + ',' + repr(b) + ')')
     
     def items(self):
-        return [(a, utah(b, self._time, self._log, self._prefix + '[' + str(a) + ']')) for (a, b) in self._target.items()]
+        return [(a, utah(b, self._time, self._log, self._prefix + '[' + repr(a) + ']')) for (a, b) in self._target.items()]
     
     def keys(self):
         return self._target.keys()
@@ -302,11 +266,11 @@ class DictLogger:
     def pop(self, key):
         if hasattr(key, '_target'):
             key = key._target
-        self._add(self._prefix + '.pop(' + str(key) + ')')
+        self._add(self._prefix + '.pop(' + repr(key) + ')')
         return self._target.pop(key)
     
     def values(self):
-        return [utah(b, self._time, self._log, self._prefix + '[' + str(a) + ']') for (a, b) in self._target.items()]
+        return [utah(b, self._time, self._log, self._prefix + '[' + repr(a) + ']') for (a, b) in self._target.items()]
 
     def __iter__(self):
         return (a for a in self._target)
@@ -334,20 +298,20 @@ class DictLogger:
     def __delitem__(self, key):
         if hasattr(key, '_target'):
             key = key._target
-        self._add('del ' + self._prefix + '[' + str(key) + ']')
+        self._add('del ' + self._prefix + '[' + repr(key) + ']')
         del self._target[key]
     
     def __getitem__(self, index):
         if hasattr(index, '_target'):
             index = index._target
-        return utah(self._target[index], self._time, self._log, self._prefix + '[' + str(index) + ']')
+        return utah(self._target[index], self._time, self._log, self._prefix + '[' + repr(index) + ']')
 
     def __setitem__(self, index, thing):
         if hasattr(index, '_target'):
             index = index._target
         if hasattr(thing, '_target'):
             thing = thing._target
-        self._add(self._prefix + '[' + str(index) + '] = ' + str(thing))
+        self._add(self._prefix + '[' + repr(index) + '] = ' + repr(thing))
         self._target[index] = thing
 
 class SetLogger:
@@ -369,13 +333,13 @@ class SetLogger:
     def add(self, other):
         if hasattr(other, '_target'):
             other = other._target
-        self._add(self._prefix + '.add(' + str(other) + ')')
+        self._add(self._prefix + '.add(' + repr(other) + ')')
         self._target.add(other)
 
     def remove(self, other):
         if hasattr(other, '_target'):
             other = other._target
-        self._add(self._prefix + '.remove(' + str(other) + ')')
+        self._add(self._prefix + '.remove(' + repr(other) + ')')
         self._target.remove(other)
 
     def clear(self):
@@ -409,6 +373,3 @@ class SetLogger:
     def __contains__(self, thing):
         return thing in self._target
 
-class x(LogBase):
-    def __init__(self):
-        LogBase.__init__(self)
