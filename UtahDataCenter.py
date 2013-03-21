@@ -1,5 +1,6 @@
 from traceback import extract_stack, format_list
 from time import time as defaulttime
+from datetime import datetime
 from collections import Sequence
 
 class spam:
@@ -52,8 +53,14 @@ def _dump(log, prefix = '', filters = []):
             if assign[4:len(prefix)+4] != prefix:
                 continue
             print('del ' + assign[4+len(prefix):])
-        print('time %f' % t)
-        print(''.join(format_list([x for x in stack if 'objectlogging' not in x[0]])))
+        print('time ' + format_time(t))
+        print(''.join(format_list([x for x in stack if 'UtahDataCenter' not in x[0]])))
+
+months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+def format_time(t):
+    d = datetime.fromtimestamp(t)
+    return '%i %s %2i %2i:%2i:%2i.%6i' % (d.year, months[d.month-1], d.day, d.hour, d.minute, d.second, d.microsecond)
 
 class ObjLogger:
     def __init__(self, timefunc, other, log, prefix):
