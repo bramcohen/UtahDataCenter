@@ -62,12 +62,55 @@ def format_time(t):
     d = datetime.fromtimestamp(t)
     return '%i %s %i %2i:%02i:%02i.%06i' % (d.year, months[d.month-1], d.day, d.hour, d.minute, d.second, d.microsecond)
 
+def prettyslice(s):
+    if type(s) != slice:
+        return repr(s)
+    r = ''
+    if s.start is not None:
+        r = str(s.start)
+    r += ':'
+    if s.stop is not None:
+        r += str(s.stop)
+    if s.step is not None:
+        r += ':' + str(s.step)
+    return r
+
 class ObjLogger:
     def __init__(self, timefunc, other, log, prefix):
         object.__setattr__(self, '_time', timefunc)
         object.__setattr__(self, '_target', other)
         object.__setattr__(self, '_log', log)
         object.__setattr__(self, '_prefix', prefix)
+
+    def __lt__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__lt__(other)
+
+    def __le__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__le__(other)
+
+    def __gt__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__gt__(other)
+
+    def __ge__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__ge__(other)
+
+    def __eq__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__eq__(other)
+
+    def __ne__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target.__ne__(other)
 
     def __hash__(self):
         return hash(self._target)
@@ -92,6 +135,24 @@ class ObjLogger:
     def __iter__(self):
         return (utah(b, self._time, self._log, self._prefix + '<iter ' + str(a) + '>') for (a, b) in enumerate(self._target))
 
+    def __getitem__(self, index):
+        if hasattr(index, '_target'):
+            index = index._target
+        return utah(self._target[index], self._time, self._log, self._prefix + '[' + prettyslice(index) + ']')
+
+    def __setitem__(self, index, thing):
+        if hasattr(index, '_target'):
+            index = index._target
+        if hasattr(thing, '_target'):
+            thing = thing._target
+        self._log.append((self._prefix + '[' + prettyslice(index) + '] = ' + repr(thing), self._time(), extract_stack()))
+        self._target[index] = thing
+
+    def __add__(self, other):
+        if hasattr(other, '_target'):
+            other = other._target
+        return self._target + other
+
     def __len__(self):
         return len(self._target)
 
@@ -107,10 +168,8 @@ class ObjLogger:
     def __str__(self):
         return str(self._target)
 
-    def __eq__(self, thing):
-        if hasattr(thing, '_target'):
-            thing = thing._target
-        return self._target == thing
+    def __bytes__(self):
+        return bytes(self._target)
 
     def dump(self, sub = '', filters = []):
         _dump(self._log, self._prefix + sub, filters)
@@ -213,14 +272,14 @@ class ListLogger(Sequence):
     def __getitem__(self, index):
         if hasattr(index, '_target'):
             index = index._target
-        return utah(self._target[index], self._time, self._log, self._prefix + '[' + str(index) + ']')
+        return utah(self._target[index], self._time, self._log, self._prefix + '[' + prettyslice(index) + ']')
     
     def __setitem__(self, index, thing):
         if hasattr(index, '_target'):
             index = index._target
         if hasattr(thing, '_target'):
             thing = thing._target
-        self._add(self._prefix + '[' + str(index) + '] = ' + repr(thing))
+        self._add(self._prefix + '[' + prettyslice(index) + '] = ' + repr(thing))
         self._target[index] = thing
 
     def __delitem__(self, key):
@@ -257,6 +316,17 @@ class DictLogger:
         else:
             return utah(self._target.get(a, b), self._time, self._log, self._prefix + '.get(' + repr(a) + ',' + repr(b) + ')')
     
+    def setdefault(self, key, default):
+        if hasattr(key, '_target'):
+            key = key._target
+        if hasattr(default, '_target'):
+            default = default._target
+        if key not in self._target:
+            self._add(self._prefix + '.setdefault(' + str(key) + ',' + str(default) + ')')
+            self._target[key] = default
+            return default
+        return utah(self._target[key], self._time, self._log, self._prefix + '[' + repr(key) + ']')
+
     def items(self):
         return [(a, utah(b, self._time, self._log, self._prefix + '[' + repr(a) + ']')) for (a, b) in self._target.items()]
     
